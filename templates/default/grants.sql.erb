@@ -3,6 +3,9 @@
 
 <% if node["platform_family"] == "debian" -%>
 # debian-sys-maint user for administration
+  <% if node["percona"]["version"] >= "5.7" -%>
+CREATE USER '<%= @debian_user %>'@'localhost' IDENTIFIED BY '<%= @debian_password %>';
+  <% end -%>
   <% [['SELECT', 'mysql.user'], ['SHUTDOWN', '*.*']].each do |priv, loc| %>
 <%= "GRANT #{priv} ON #{loc} TO '#{@debian_user}'@'localhost';" %>
   <% end -%>
