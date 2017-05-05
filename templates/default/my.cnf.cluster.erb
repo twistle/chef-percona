@@ -296,7 +296,9 @@ log-queries-not-using-indexes = <%= node["percona"]["server"]["log_queries_not_u
 # is required for both master and slave hosts. It defaults to 1 if
 # "master-host" is not set, but will MySQL will not function as a master
 # if it is omitted.
-#server-id    = 1
+<% if node["percona"]["server"]["server_id"] %>
+server-id = <%= node["percona"]["server"]["server_id"] %>
+<% end %>
 
 <% unless node["percona"]["server"]["replication"]["ignore_db"].empty? %>
 # Tells the slave SQL thread not to replicate any statement where the default database is.
