@@ -3,6 +3,9 @@
 
 <% if node["platform_family"] == "debian" -%>
 # debian-sys-maint user for administration
+  <% if node["percona"]["version"] >= "5.7" -%>
+CREATE USER IF NOT EXISTS '<%= @debian_user %>'@'localhost' IDENTIFIED BY '<%= @debian_password %>';
+  <% end -%>
   <% [['SELECT', 'mysql.user'], ['SHUTDOWN', '*.*']].each do |priv, loc| %>
 <%= "GRANT #{priv} ON #{loc} TO '#{@debian_user}'@'localhost';" %>
   <% end -%>
@@ -12,10 +15,16 @@ SET PASSWORD FOR '<%= @debian_user %>'@'localhost' = PASSWORD('<%= @debian_passw
 
 <% if node["percona"]["backup"]["configure"] %>
 # Grant permissions for the XtraBackup user
+  <% if node["percona"]["version"] >= "5.7" -%>
+CREATE USER IF NOT EXISTS '<%= node["percona"]["backup"]["username"] %>'@'localhost' IDENTIFIED BY '<%= @backup_password %>';
+REVOKE ALL PRIVILEGES, GRANT OPTION FROM '<%= node["percona"]["backup"]["username"] %>'@'localhost';
+GRANT RELOAD, LOCK TABLES, REPLICATION CLIENT ON *.* TO '<%= node["percona"]["backup"]["username"] %>'@'localhost';
+  <% else -%>
 # Ensure the user exists, then revoke all grants, then re-grant specific permissions
 GRANT RELOAD, LOCK TABLES, REPLICATION CLIENT ON *.* TO '<%= node["percona"]["backup"]["username"] %>'@'localhost' IDENTIFIED BY '<%= @backup_password %>';
 REVOKE ALL PRIVILEGES, GRANT OPTION FROM '<%= node["percona"]["backup"]["username"] %>'@'localhost';
 GRANT RELOAD, LOCK TABLES, REPLICATION CLIENT ON *.* TO '<%= node["percona"]["backup"]["username"] %>'@'localhost' IDENTIFIED BY '<%= @backup_password %>';
+  <% end -%>
 <% end -%>
 
 # Set the server root password. This should be preseeded by the package installation.
